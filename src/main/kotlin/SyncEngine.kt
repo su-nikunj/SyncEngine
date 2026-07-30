@@ -10,16 +10,16 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SyncEngine(
     private val remoteServer: RemoteServer,
-    @Volatile private var _localRecord: Record
+    private var _localRecord: Record
 ) {
-    @Volatile private var running: Boolean = true
+    private var running: Boolean = true
     private var sleepTime: Long = 1000L
 
     var localRecord: Record
         get() = _localRecord
         set(value) { _localRecord = value }
 
-    @Volatile var remoteRecord: Record? = null
+    var remoteRecord: Record? = null
 
     init {
         runEventLoop()
