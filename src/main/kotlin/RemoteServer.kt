@@ -46,9 +46,4 @@ class RemoteServer {
             HttpMethod.DELETE -> deleteRecord(request.record.id)
         }
     }
-
-    // Synchronously modify a record for the purpose of the simulation
-    fun updateRecordSync(updatedRecord: Record) {
-        updateRecord(updatedRecord)
-    }
 }

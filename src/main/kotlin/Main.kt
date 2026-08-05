@@ -1,5 +1,6 @@
 package org.example
 
+import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import kotlin.uuid.Uuid
 
@@ -89,7 +90,10 @@ fun main() {
                             System.currentTimeMillis()
                         )
 
-                        remoteServer.updateRecordSync(newRecord)
+                        val patchRequest = HttpRequest(HttpMethod.PATCH, newRecord)
+                        runBlocking {
+                            remoteServer.httpRequest(patchRequest)
+                        }
                         println("${newRecord.id} modified")
                     }
                 }
