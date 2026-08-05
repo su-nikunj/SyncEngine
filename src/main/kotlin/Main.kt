@@ -6,10 +6,11 @@ import kotlin.uuid.Uuid
 fun main() {
     val remoteServer = RemoteServer()
 
-    val numRecords = 100_000
+    val numRecords = 1000
 
-    // Create a local database of records
-    val localRecords = mutableListOf<SyncEngine>()
+    // Create one local device per record. Each SyncEngine instance simulates a
+    // separate device, and each device syncs one single Record with the server.
+    val localDevices = mutableListOf<SyncEngine>()
     for (i in 1..numRecords) {
         val data = Data(
             Random.nextInt(),
@@ -20,7 +21,7 @@ fun main() {
         val localRecord = Record(i, data, System.currentTimeMillis())
         val localEngine = SyncEngine(remoteServer, localRecord)
 
-        localRecords.add(localEngine)
+        localDevices.add(localEngine)
     }
 
     val prompt = "1. Modify some random local records.\n" +
@@ -43,7 +44,7 @@ fun main() {
             null -> break
             6 -> println(prompt)
             5 -> {
-                for (syncEngine in localRecords) {
+                for (syncEngine in localDevices) {
                     println("ID: ${syncEngine.localRecord.id}")
                     println("Local Record:")
                     println(syncEngine.localRecord)
@@ -53,7 +54,7 @@ fun main() {
                 }
             }
             4 -> {
-                for (i in (localRecords.size + 1)..(localRecords.size + amountToPick)) {
+                for (i in (localDevices.size + 1)..(localDevices.size + amountToPick)) {
                     val newData = Data(
                         Random.nextInt(),
                         Uuid.random().toString(),
@@ -61,19 +62,19 @@ fun main() {
                         Random.nextBoolean()
                     )
                     val newRecord = Record(i, newData, System.currentTimeMillis())
-                    localRecords.add(SyncEngine(remoteServer, newRecord))
+                    localDevices.add(SyncEngine(remoteServer, newRecord))
                     println("New Record: $i")
                 }
             }
             3 -> {
-                val engines = localRecords.shuffled().take(amountToPick)
+                val engines = localDevices.shuffled().take(amountToPick)
                 for (syncEngine in engines) {
                     syncEngine.localRecord = syncEngine.localRecord.copy(deleted = true)
                     println("${syncEngine.localRecord.id} deleted")
                 }
             }
             2 -> {
-                val engines = localRecords.shuffled().take(amountToPick)
+                val engines = localDevices.shuffled().take(amountToPick)
                 for (syncEngine in engines) {
                     if (!syncEngine.localRecord.deleted && syncEngine.remoteRecord != null) {
                         val newData = Data(
@@ -94,7 +95,7 @@ fun main() {
                 }
             }
             1 -> {
-                val engines = localRecords.shuffled().take(amountToPick)
+                val engines = localDevices.shuffled().take(amountToPick)
                 for (syncEngine in engines) {
                     if (!syncEngine.localRecord.deleted) {
                         val newData = Data(
@@ -117,7 +118,7 @@ fun main() {
         }
     } while (input in 1..<7)
 
-    for (syncEngine in localRecords) {
+    for (syncEngine in localDevices) {
         syncEngine.stopEventLoop()
     }
 }

@@ -8,6 +8,10 @@ import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Simulates a single client device. Each [SyncEngine] owns exactly one [Record] and keeps
+ * its local copy in sync with the remote copy on the [remoteServer].
+ */
 class SyncEngine(
     private val remoteServer: RemoteServer,
     private var _localRecord: Record
