@@ -28,10 +28,10 @@ Conflicts are resolved by **last-write-wins**: the record with the more recent `
 
 ## Server behavior
 
-`RemoteServer` keeps an in-memory list of records and receives `HttpRequest`. To stay realistic:
+`RemoteServer` keeps records in an in-memory store and receives `HttpRequest`. To stay realistic:
 
 - A `Semaphore(1000)` caps the number of concurrent requests.
-- Write operations are serialized (only one at a time) via `limitedParallelism(1)`.
+- Records live in a thread-safe `ConcurrentHashMap` keyed by record id, so reads are lock-free while concurrent writes to different records stay safe.
 
 ## Data model
 

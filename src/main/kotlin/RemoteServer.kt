@@ -1,40 +1,38 @@
 package org.example
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 class RemoteServer {
-    private val records = mutableListOf<Record>()
+    private val records = ConcurrentHashMap<Int, Record>()
     // Only allow 1000 requests to the server at the same time
     private val requestSemaphore = Semaphore(1000)
-    // Only allow 1 write operation at a time
-    private val writeDispatcher = Dispatchers.IO.limitedParallelism(1)
 
-    private suspend fun addRecord(record: Record): HttpResponse = withContext(writeDispatcher) {
-        records.add(record.copy())
-        return@withContext HttpResponse(201, record)
+    private fun addRecord(record: Record): HttpResponse {
+        records.putIfAbsent(record.id, record.copy())
+        return HttpResponse(201, record)
     }
 
-    private suspend fun getRecordById(id: Int): Record? = withContext(writeDispatcher) {
-        return@withContext records.find { it.id == id }?.copy()
+    private fun getRecordById(id: Int): Record? {
+        return records[id]?.copy()
     }
 
-    private suspend fun updateRecord(updatedRecord: Record): HttpResponse = withContext(writeDispatcher) {
-        val index = records.indexOfFirst { it.id == updatedRecord.id }
-        if (index == -1)
-            return@withContext HttpResponse(404)
+    private fun updateRecord(updatedRecord: Record): HttpResponse {
+        val id = updatedRecord.id
+        if (!records.containsKey(id))
+            return HttpResponse(404)
 
-        records[index] = updatedRecord.copy()
-        return@withContext HttpResponse(200, records[index])
+        records[id] = updatedRecord.copy()
+        return HttpResponse(200, records[id])
     }
 
-    private suspend fun deleteRecord(id: Int): HttpResponse = withContext(writeDispatcher) {
-        val index = records.indexOfFirst { it.id == id }
-        if (index != -1)
-            records.removeAt(index)
-        return@withContext HttpResponse(200)
+    private fun deleteRecord(id: Int): HttpResponse {
+        val result = records.remove(id)
+        return if (result != null)
+            HttpResponse(200, result)
+        else
+            HttpResponse(404)
     }
 
     suspend fun httpRequest(request: HttpRequest): HttpResponse = requestSemaphore.withPermit {
@@ -51,9 +49,6 @@ class RemoteServer {
 
     // Synchronously modify a record for the purpose of the simulation
     fun updateRecordSync(updatedRecord: Record) {
-        val index = records.indexOfFirst { it.id == updatedRecord.id }
-        if (index != -1) {
-            records[index] = updatedRecord.copy()
-        }
+        updateRecord(updatedRecord)
     }
 }

@@ -6,7 +6,7 @@ import kotlin.uuid.Uuid
 fun main() {
     val remoteServer = RemoteServer()
 
-    val numRecords = 1000
+    val numRecords = 100_000
 
     // Create one local device per record. Each SyncEngine instance simulates a
     // separate device, and each device syncs one single Record with the server.
